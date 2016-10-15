@@ -1,2 +1,2 @@
 # SVGenerate
-A SVG genarator for scss
+A SVG generator for scss
