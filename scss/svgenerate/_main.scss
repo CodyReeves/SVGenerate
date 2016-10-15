@@ -1,0 +1,127 @@
+/* =====================================================
+Function to encode SVG
+--  $string - Initial string
+--  $search - String to replace
+--  $replace - ('') new values
+--  @returns updated String
+===================================================== */
+
+@function str-encode($string, $search, $replace: '') {
+  $index: str-index($string, $search);
+
+  @if $index {
+    @return str-slice($string, 1, $index - 1) + $replace + str-encode(str-slice($string, $index + str-length($search)), $search, $replace);
+  }
+
+  @return $string;
+}
+
+@function svg-inline($string){
+  $result: str-encode($string, "<svg", "<svg xmlns='http://www.w3.org/2000/svg'");
+  $result: str-encode($result,'%', '%25');
+  $result: str-encode($result,'"', '%22');
+  $result: str-encode($result,"'", '%27');
+  $result: str-encode($result,' ', '%20');
+  $result: str-encode($result,'<', '%3C');
+  $result: str-encode($result,'>', '%3E');
+  @return "data:image/svg+xml;utf8," + $result;
+}
+
+/* Usage: svg-inline("<svg viewBox='-100 -100 200 200'><style>path{fill: none;stroke:cyan;stroke-linecap:round;stroke-width:20;}</style><path d='M-27,-53A60 60 0 1 0 27 -53M0,-75 0,-15'/></svg>"); */
+
+@if not function-exists(str-encode) {
+  @error 'str-encode not found. Please ensure str-encode function is added to your project.';
+}
+
+$svg-group: null !global;
+
+@mixin svg($type: 'svg', $attrs: null) {
+  $encode: true;
+
+  //This will be checking to ensure that there is no svg tag within svg tag ie: <svg><svg></svg></svg>
+  $previous: $svg-group;
+  //svg group should contain nothng at sr=tart but it should kep adding maps togther
+  $svg-group: () !global;
+
+  @content;
+
+  @if (type-of($type) == 'map' and not $attrs and not $previous ) {
+    $attrs: $type;
+    $type: 'svg';
+  }
+
+  $element: ( type: $type, attrs: $attrs, children: $svg-group );
+
+  @if $previous != null {
+    $svg-group: $previous !global;
+    $svg-group: map-merge($svg-group, $element) !global;
+
+  } @else {
+    @if $encode == true {
+      background-image: url("#{svg-inline(svg-render($element))}");
+    } @else {
+      background-image: url("#{svg-render($element)}");
+    }
+    $svg-group: null !global;
+  }
+}
+
+//Renders into proper markup
+@function svg-render($element) {
+  $type: null;
+  @if $element == null {
+    $type: null;
+  } @else {
+    $type: map-get($element, 'type');
+  }
+  $attrs-get: ;
+  $children-get: map-get($element, 'children');
+  $attrs: svg-render-attr(map-get($element, 'attrs')) !global;
+  $children: map-get($element, 'children');
+
+  @if length($children) > 0 {
+    @if $attrs == null {
+      @return '<#{$type}>#{svg-render($children)}</#{$type}>';
+    } @else {
+      @return '<#{$type} #{$attrs}>#{svg-render($children)}</#{$type}>';
+    }
+  } @else {
+    @if $attrs == null {
+      @return '<#{$type}/>';
+    } @else {
+      @return '<#{$type} #{$attrs}/>';
+    }
+  }
+}
+
+//Renders attrs to be put into tag
+@function svg-render-attr($attrs){
+  $attrs-string: null;
+  @if $attrs == null {
+    //Do nothing
+  } @else {
+    //$attrs-string: null;
+    $length: length($attrs);
+
+    @for $i from 1 through $length {
+      $attr: nth($attrs, $i);
+      $key: nth($attr, 1);
+      $value: nth($attr, 2);
+      $attrs-string: zip($attrs-string, $key + '="' + $value + '"');
+    }
+  }
+
+  @return $attrs-string;
+}
+
+
+//String Replacer
+@function str-replace($string, $search, $replace: '') {
+  $index: str-index($string, $search);
+
+  @if $index {
+    @return str-slice($string, 1, $index - 1) + $replace + str-replace(str-slice($string, $index + str-length($search)), $search, $replace);
+  }
+
+  @return $string;
+}
