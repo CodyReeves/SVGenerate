@@ -35,7 +35,7 @@ Function to encode SVG
 
 $svg-group: null !global;
 
-@mixin svg($type: 'svg', $attrs: null) {
+@mixin svg($type: 'svg', $attrs: null, $default-fill: null) {
   $encode: true;
 
   //This will be checking to ensure that there is no svg tag within svg tag ie: <svg><svg></svg></svg>
@@ -45,12 +45,19 @@ $svg-group: null !global;
 
   @content;
 
-  @if (type-of($type) == 'map' and not $attrs and not $previous ) {
+  @if (type-of($type) == 'map' and not $previous and not $attrs ) {
     $attrs: $type;
     $type: 'svg';
   }
+  $element:() !default;
 
-  $element: ( type: $type, attrs: $attrs, children: $svg-group );
+  //Checks to see if fill has value if it does use it else dont
+  @if $default-fill == null {
+    $element: ( type: $type, attrs: $attrs, children: $svg-group );
+  } @else {
+    $attrs-wfill: map-merge($attrs, (fill:$default-fill));
+    $element: ( type: $type, attrs: $attrs-wfill, children: $svg-group );
+  }
 
   @if $previous != null {
     $svg-group: $previous !global;
@@ -74,8 +81,6 @@ $svg-group: null !global;
   } @else {
     $type: map-get($element, 'type');
   }
-  $attrs-get: ;
-  $children-get: map-get($element, 'children');
   $attrs: svg-render-attr(map-get($element, 'attrs')) !global;
   $children: map-get($element, 'children');
 
@@ -100,9 +105,8 @@ $svg-group: null !global;
   @if $attrs == null {
     //Do nothing
   } @else {
-    //$attrs-string: null;
     $length: length($attrs);
-
+    $i: 1;
     @for $i from 1 through $length {
       $attr: nth($attrs, $i);
       $key: nth($attr, 1);
@@ -112,16 +116,4 @@ $svg-group: null !global;
   }
 
   @return $attrs-string;
-}
-
-
-//String Replacer
-@function str-replace($string, $search, $replace: '') {
-  $index: str-index($string, $search);
-
-  @if $index {
-    @return str-slice($string, 1, $index - 1) + $replace + str-replace(str-slice($string, $index + str-length($search)), $search, $replace);
-  }
-
-  @return $string;
 }
