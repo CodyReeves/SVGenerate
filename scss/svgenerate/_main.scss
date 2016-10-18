@@ -35,12 +35,12 @@ Function to encode SVG
 
 $svg-group: null !global;
 
-@mixin svg($type: 'svg', $attrs: null, $default-fill: null) {
-  $encode: true;
+@mixin svg($type: 'svg', $attrs: null, $default-fill: null, $property-type: null) {
+  $encode: true !global;
 
   //This will be checking to ensure that there is no svg tag within svg tag ie: <svg><svg></svg></svg>
   $previous: $svg-group;
-  //svg group should contain nothng at sr=tart but it should kep adding maps togther
+  //svg group should contain nothng at start but it should kep adding maps togther
   $svg-group: () !global;
 
   @content;
@@ -64,12 +64,36 @@ $svg-group: null !global;
     $svg-group: map-merge($svg-group, $element) !global;
 
   } @else {
-    @if $encode == true {
-      background-image: url("#{svg-inline(svg-render($element))}");
-    } @else {
-      background-image: url("#{svg-render($element)}");
-    }
+    @include property-type($element, $property-type, $default-fill);
     $svg-group: null !global;
+  }
+}
+
+@mixin property-type($element-str, $property, $fill){
+  $final-svg:;
+  @if $encode == true {
+     $final-svg: svg-inline(svg-render($element-str));
+  } @else {
+    $final-svg: svg-render($element-str);
+  }
+
+  @if $property == mask {
+    //TODO:: Look into anouther way to do this currently mask does not accept inline svg
+    @error 'Property - mask featured is currently in development.';
+    @warn 'Property - mask featured  does not have full browser support';
+
+    -webkit-map: url("#{$final-svg}") no-repeat 50% 50%;
+    map: url("#{$final-svg}") no-repeat 50% 50%;
+    -webkit-mask-size: cover;
+    mask-size: cover;
+
+    @if $fill == null {
+      @warn 'You must have a value set for default-fill';
+    }
+    background-color: $fill;
+
+  } @else {
+    background-image: url("#{$final-svg}");
   }
 }
 

@@ -26,7 +26,7 @@
   background-repeat: no-repeat;
 
     @include svg((viewBox: '-100 -100 200 200')) {
-      @include svg('path', (stroke: $black, stroke-linecap:round, stroke-width: 20,fill: none,d: 'M-27,-53A60 60 0 1 0 27 -53M0,-75 0,-15'));
+      @include svg('path', (stroke: red, stroke-linecap:round, stroke-width: 20,fill: none,d: 'M-27,-53A60 60 0 1 0 27 -53M0,-75 0,-15'));
 }
 }
 
